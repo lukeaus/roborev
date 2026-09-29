@@ -92,6 +92,9 @@ var defaultLimitRules = []limitRule{
 	// specific intent wins under first-match-wins (classifyLimitWithRules).
 	// Codex ChatGPT-account usage cap — a quota skip, not a hard failure.
 	{Agents: []string{"codex"}, Substring: "you've hit your usage limit", Kind: LimitKindQuota},
+	// Factory droid provider 403 when the subscription allowance is spent,
+	// captured from droid's own log (its stderr only says "Exec failed").
+	{Agents: []string{"droid"}, Substring: "allowance for this period is used up", Kind: LimitKindQuota},
 	// Claude Code five-hour session cap, captured from real daemon logs.
 	{Agents: []string{"claude-code"}, Substring: "you've hit your session limit", Kind: LimitKindSession},
 	// Claude Code weekly limits outlast same-agent retries.

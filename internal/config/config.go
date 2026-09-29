@@ -357,6 +357,7 @@ type Config struct {
 	PiCmd         string `toml:"pi_cmd"`
 	OpenCodeCmd   string `toml:"opencode_cmd"`
 	GrokCmd       string `toml:"grok_cmd"`
+	DroidCmd      string `toml:"droid_cmd"`
 
 	// API keys (optional - agents use subscription auth by default)
 	AnthropicAPIKey string `toml:"anthropic_api_key" sensitive:"true"`
@@ -909,6 +910,7 @@ func DefaultConfig() *Config {
 		PiCmd:              "pi",
 		OpenCodeCmd:        "opencode",
 		GrokCmd:            "grok",
+		DroidCmd:           "droid",
 		MouseEnabled:       true,
 		Cost: CostConfig{
 			Timeout: "10s",

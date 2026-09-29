@@ -12,6 +12,7 @@ import (
 // DroidAgent runs code reviews using Factory's Droid CLI
 type DroidAgent struct {
 	Command   string         // The droid command to run (default: "droid")
+	Model     string         // Model ID passed via -m (empty = droid default)
 	Reasoning ReasoningLevel // Reasoning level for the agent
 	Agentic   bool           // Whether agentic mode is enabled (allow file edits)
 }
@@ -27,7 +28,7 @@ func NewDroidAgent(command string) *DroidAgent {
 func (a *DroidAgent) clone(opts ...agentCloneOption) *DroidAgent {
 	cfg := newAgentCloneConfig(
 		a.Command,
-		"",
+		a.Model,
 		a.Reasoning,
 		a.Agentic,
 		"",
@@ -35,6 +36,7 @@ func (a *DroidAgent) clone(opts ...agentCloneOption) *DroidAgent {
 	)
 	return &DroidAgent{
 		Command:   cfg.Command,
+		Model:     cfg.Model,
 		Reasoning: cfg.Reasoning,
 		Agentic:   cfg.Agentic,
 	}
@@ -50,9 +52,9 @@ func (a *DroidAgent) WithAgentic(agentic bool) Agent {
 	return a.clone(withClonedAgentic(agentic))
 }
 
-// WithModel returns the agent unchanged (model selection not supported for droid).
+// WithModel returns a copy of the agent configured to use the given model.
 func (a *DroidAgent) WithModel(model string) Agent {
-	return a
+	return a.clone(withClonedModel(model))
 }
 
 // droidReasoningEffort maps ReasoningLevel to droid-specific effort values
@@ -85,6 +87,10 @@ func (a *DroidAgent) CommandLine() string {
 
 func (a *DroidAgent) buildArgs(agenticMode bool) []string {
 	args := []string{"exec", "--tag", "roborev"}
+
+	if a.Model != "" {
+		args = append(args, "-m", a.Model)
+	}
 
 	// Set autonomy level based on agentic mode
 	if agenticMode {
@@ -123,6 +129,12 @@ func (a *DroidAgent) Review(ctx context.Context, repoPath, commitSHA, prompt str
 	if err := cmd.Run(); err != nil {
 		if ctxErr := contextProcessError(ctx, tracker, err, nil); ctxErr != nil {
 			return "", ctxErr
+		}
+		// Droid may print the provider error on stdout while stderr only
+		// says "Exec failed"; keep both so limit classification and
+		// `roborev show` see the cause.
+		if out := strings.TrimSpace(stdout.String()); out != "" {
+			return "", fmt.Errorf("droid failed: %w\nstderr: %s\nstdout: %s", err, stderr.String(), out)
 		}
 		return "", fmt.Errorf("droid failed: %w\nstderr: %s", err, stderr.String())
 	}

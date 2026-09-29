@@ -60,6 +60,7 @@ func TestAgentSpecsCommandOverrides(t *testing.T) {
 		PiCmd:         "custom-pi",
 		OpenCodeCmd:   "custom-opencode",
 		GrokCmd:       "custom-grok",
+		DroidCmd:      "custom-droid",
 	}
 
 	for _, spec := range allAgentSpecs {

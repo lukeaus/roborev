@@ -26,6 +26,15 @@ func TestDroidBuildArgs(t *testing.T) {
 			dontWant: []string{"medium"},
 		},
 		{
+			name:     "Model set",
+			setup:    func(a *DroidAgent) *DroidAgent { return a.WithModel("custom:foo").(*DroidAgent) },
+			wantArgs: []string{"-m", "custom:foo"},
+		},
+		{
+			name:     "No model",
+			dontWant: []string{"-m"},
+		},
+		{
 			name:     "Agentic mode",
 			agentic:  true,
 			wantArgs: []string{"--auto", "medium"},
@@ -208,4 +217,32 @@ func TestDroidReviewAgenticModeFromGlobal(t *testing.T) {
 	if !strings.Contains(string(args), "medium") {
 		require.Contains(t, strings.TrimSpace(string(args)), "--auto", "expected '--auto medium' in args when global unsafe enabled, got %s", strings.TrimSpace(string(args)))
 	}
+}
+
+func TestDroidWithModel(t *testing.T) {
+	a := NewDroidAgent("droid")
+
+	a2 := a.WithModel("custom:foo").(*DroidAgent)
+	assert.Equal(t, "custom:foo", a2.Model)
+	assert.Empty(t, a.Model, "original should be unchanged")
+
+	a3 := a2.WithReasoning(ReasoningThorough).(*DroidAgent)
+	assert.Equal(t, "custom:foo", a3.Model, "model should survive other clones")
+	assert.Contains(t, a3.CommandLine(), "-m custom:foo")
+}
+
+func TestDroidFailureIncludesStdoutAndClassifiesQuota(t *testing.T) {
+	mock := mockAgentCLI(t, MockCLIOpts{
+		StderrLines: []string{"Error during droid execution: Exec failed"},
+		StdoutLines: []string{"403 Your subscription allowance for this period is used up."},
+		ExitCode:    1,
+	})
+	a := NewDroidAgent(mock.CmdPath)
+
+	_, err := a.Review(context.Background(), t.TempDir(), "HEAD", "review", nil)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Exec failed")
+	assert.Contains(t, err.Error(), "allowance for this period is used up")
+	assert.Equal(t, LimitKindQuota, ClassifyLimit("droid", err.Error()).Kind)
 }

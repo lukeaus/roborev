@@ -173,3 +173,11 @@ func TestClassifyLimitWithRulesIsolatesSyntheticPattern(t *testing.T) {
 	cls2 := ClassifyLimit("claude-code", "5-hour test-claude session limit reached")
 	assert.Equal(LimitKindNone, cls2.Kind, "synthetic rule must not leak into defaultLimitRules")
 }
+
+func TestClassifyLimitDroidAllowanceExhausted(t *testing.T) {
+	msg := "403 Your subscription allowance for this period is used up, " +
+		"and your plan does not allow spending wallet balance on top of it."
+
+	assert.Equal(t, LimitKindQuota, ClassifyLimit("droid", msg).Kind)
+	assert.Equal(t, LimitKindNone, ClassifyLimit("codex", msg).Kind)
+}
