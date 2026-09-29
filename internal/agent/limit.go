@@ -79,17 +79,10 @@ type limitRule struct {
 // local retry with backoff (no cooldown), so the bar is deliberately
 // kept high to avoid retrying deterministic failures forever.
 var defaultLimitRules = []limitRule{
-	{Agents: []string{"*"}, Substring: "resource exhausted", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "quota exceeded", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "quota_exceeded", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "quota exhausted", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "quota_exhausted", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "insufficient_quota", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "exhausted your capacity", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "capacity exhausted", Kind: LimitKindQuota},
-	{Agents: []string{"*"}, Substring: "capacity_exhausted", Kind: LimitKindQuota},
 	// Agent-specific rules precede the generic "*" rules so the more
 	// specific intent wins under first-match-wins (classifyLimitWithRules).
+	// Order here is load-bearing: a generic rule that matched the same text
+	// would otherwise shadow the agent-specific kind.
 	// Codex ChatGPT-account usage cap — a quota skip, not a hard failure.
 	{Agents: []string{"codex"}, Substring: "you've hit your usage limit", Kind: LimitKindQuota},
 	// Factory droid provider 403 when the subscription allowance is spent,
@@ -99,6 +92,15 @@ var defaultLimitRules = []limitRule{
 	{Agents: []string{"claude-code"}, Substring: "you've hit your session limit", Kind: LimitKindSession},
 	// Claude Code weekly limits outlast same-agent retries.
 	{Agents: []string{"claude-code"}, Substring: "you've hit your weekly limit", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "resource exhausted", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "quota exceeded", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "quota_exceeded", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "quota exhausted", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "quota_exhausted", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "insufficient_quota", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "exhausted your capacity", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "capacity exhausted", Kind: LimitKindQuota},
+	{Agents: []string{"*"}, Substring: "capacity_exhausted", Kind: LimitKindQuota},
 	// Transient/outage — observed provider wording only (no speculative
 	// substrings; see the no-speculative note above). Retried with backoff.
 	{Agents: []string{"*"}, Substring: "too many requests", Kind: LimitKindTransient},

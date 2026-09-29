@@ -9,16 +9,17 @@ All notable changes to roborev, grouped by minor release.
 
 **Bug fixes**
 
-- The Droid agent now honors `review_model`, `backup_model`, the other
-    `*_model` settings, repo `model`, and `--model`, passing the value to
-    `droid exec -m`. Before, it ignored them and used Droid's own default model.
-- Droid's "subscription allowance for this period is used up" failure now counts
-    as quota exhaustion. The job skips retries, Droid enters cooldown, and the
-    backup agent takes over. Droid failures also include anything Droid prints
-    on stdout, not only stderr.
+- The Droid agent now honors `review_model`, `backup_model`, the other `*_model`
+    settings, repo `model`, and `--model`, passing the value to `droid exec -m`.
+    Before, it ignored them and used Droid's own default model.
+- Droid failures now surface the provider-side cause. Droid reports only
+    `Exec failed` on stderr while the real reason — for example a 403
+    "subscription allowance for this period is used up" error — is written to
+    Droid's own log, so roborev recovers that message into the job error.
+    Allowance exhaustion now counts as quota: the job skips retries, Droid
+    enters cooldown, and the backup agent takes over.
 - New `droid_cmd` setting overrides the Droid executable, like `opencode_cmd`.
     See [agent commands](/docs/configuration/).
-
 - Missing embedding credentials no longer prevent the daemon from starting.
     Reviews and lexical search continue without startup warnings. Search and
     status explain missing keys and provider rejection, and health exposes

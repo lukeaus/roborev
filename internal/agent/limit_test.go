@@ -181,3 +181,16 @@ func TestClassifyLimitDroidAllowanceExhausted(t *testing.T) {
 	assert.Equal(t, LimitKindQuota, ClassifyLimit("droid", msg).Kind)
 	assert.Equal(t, LimitKindNone, ClassifyLimit("codex", msg).Kind)
 }
+
+func TestClassifyLimitAgentSpecificRulesPrecedeGeneric(t *testing.T) {
+	// The rule table orders agent-specific rules above the generic "*" rules
+	// so the more specific kind wins under first-match-wins. This message
+	// matches both a generic quota substring and a Claude session substring;
+	// only ordering decides which kind the caller acts on.
+	const msg = "resource exhausted; you've hit your session limit · resets 5:50am"
+
+	assert := assert.New(t)
+	assert.Equal(LimitKindSession, ClassifyLimit("claude-code", msg).Kind)
+	// Without an agent-specific rule the generic one still applies.
+	assert.Equal(LimitKindQuota, ClassifyLimit("gemini", msg).Kind)
+}
