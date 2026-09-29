@@ -159,6 +159,23 @@ launch_args = ["--extension", "npm:@example/pi-provider"]
 	assert.Equal(t, []string{"--extension", "npm:@example/pi-provider"}, cfg.Agent.Pi.LaunchArgs)
 }
 
+func TestLoadGlobalDroidCmd(t *testing.T) {
+	testenv.SetDataDir(t)
+
+	path := filepath.Join(DataDir(), "config.toml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+
+	require.NoError(t, os.WriteFile(path, []byte("default_agent = \"droid\"\n"), 0o600))
+	cfg, err := LoadGlobalFrom(path)
+	require.NoError(t, err)
+	assert.Equal(t, "droid", cfg.DroidCmd)
+
+	require.NoError(t, os.WriteFile(path, []byte("droid_cmd = \"/opt/bin/droid-wrapper\"\n"), 0o600))
+	cfg, err = LoadGlobalFrom(path)
+	require.NoError(t, err)
+	assert.Equal(t, "/opt/bin/droid-wrapper", cfg.DroidCmd)
+}
+
 func TestLoadGlobalCostConfigFromTOML(t *testing.T) {
 	testenv.SetDataDir(t)
 
